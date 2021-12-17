@@ -1,0 +1,92 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+_c(){
+  while :; do
+    [ "$(
+      curl -s "https://api.github.com/rate_limit" | jq '.rate.remaining'
+    )" = "0" ] || break
+    echo "warning: late limit has exceeded. waiting for 60sec..." >&2
+    sleep 60
+  done
+  curl -s "https://api.github.com${1}"
+}
+
+_usage(){
+  if [[ "$0" =~ /gh/extensions ]]; then
+    echo "usage: gh repos <gh-username>"
+  else
+    echo "usage: ${0} <gh-username>"
+  fi
+}
+
+main(){
+  if ! command -v curl jq &> /dev/null; then
+    echo "require: curl jq" >&2
+    return 1
+  elif [ "$#" = 0 ]; then
+    _usage
+    return 0
+  elif [ "$#" != 1 ]; then
+    echo "error: invalid arity -- $#" >&2
+    _usage >&2
+    return 1
+  elif _c "/users/${1}" |
+       grep -q '"message": "Not Found",'; then
+    echo "404: ${1}" >&2
+    return 1
+  fi
+
+  for i in $(ls ./*.json 2>/dev/null);do
+    rm -i "$i"
+  done
+
+  local n
+  n="$(
+    _c "/users/eggplants" |
+    grep public_repos | grep -oE '[0-9]+'
+  )"
+  for i in $(seq "$((n/100+(n%100?1:0)))"); do
+    _c "/users/eggplants/repos?page=${i}&per_page=100" \
+    >> _.jsonl
+  done
+  jq --slurp '.|add' _.jsonl > "${1}.full.json"
+  jq '
+    sort_by(.created_at)|map({
+      "name": .full_name,
+      "description": .description,
+      "lang": .language,
+      "fork": .fork,
+      "archived": .archived,
+      "star": .stargazers_count,
+      "created_at": .created_at,
+      "updated_at": .updated_at
+    })
+  ' "${1}.full.json"  > "${1}.summarized.json"
+  jq -r '
+    [
+      [
+        "index",
+        "name", "description", "lang",
+        "fork", "archived", "star",
+        "created", "updated"
+      ],
+      (
+        sort_by(.created_at)|to_entries|.[]|
+        [
+          (.key|tostring),
+          .value.name, .value.description, .value.language,
+          (.value.fork|tostring), (.value.archived|tostring), (.value.stargazers_count|tostring),
+          .value.created_at, .value.updated_at
+        ]
+      )
+    ][]|@csv
+  ' "${1}.full.json" > "${1}.csv"
+  rm _.jsonl
+
+  echo "created: '${1}.full.json', '${1}.summarized.json', '${1}.csv'"
+}
+
+main "${@}"
+exit $?
