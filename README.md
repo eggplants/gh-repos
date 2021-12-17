@@ -38,6 +38,19 @@ $ head eggplants.full.json; echo ...
       "login": "eggplants",
       "id": 42153744,
 ...
+$ head -11 eggplants.summarized.json; echo ...
+[
+  {
+    "name": "eggplants/f_down",
+    "description": "futaba channel thread downloader via tsumanne",
+    "lang": "Ruby",
+    "fork": false,
+    "archived": true,
+    "star": 1,
+    "created_at": "2018-12-15T20:01:05Z",
+    "updated_at": "2020-12-17T18:13:34Z"
+  },
+...
 $ head eggplants.csv; echo ...
 "index","name","description","lang","fork","archived","star","created","updated"
 "0","f_down","futaba channel thread downloader via tsumanne","Ruby","false","true","1","2018-12-15T20:01:05Z","2020-12-17T18:13:34Z"
