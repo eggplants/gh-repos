@@ -1,7 +1,7 @@
 # gh-repos
 
 - Create list of specific user's public repos as json and csv
-  - `<user>..full.json`, `<user>.summarized.json`, `<user>.csv`
+  - `<user>.full.json`, `<user>.summarized.json`, `<user>.csv`
 - Improved version of [eggplants/gh-matome](https://github.com/eggplants/gh-matome)
 
 ## Install
