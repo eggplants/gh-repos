@@ -81,7 +81,7 @@ main(){
         ]
       )
     ][]|@csv
-  ' "${username}.full.json" > "${1}.csv"
+  ' "${username}.full.json" > "${username}.csv"
 
   echo "created: '${username}.full.json', '${username}.summarized.json', '${username}.csv'"
 }
