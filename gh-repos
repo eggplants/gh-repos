@@ -37,21 +37,20 @@ main(){
     echo "404: ${1}" >&2
     return 1
   fi
-
-  for i in $(ls ./*.json 2>/dev/null);do
-    rm -i "$i"
-  done
+  username="$1"
 
   local n
   n="$(
-    _c "/users/eggplants" |
+    _c "/users/${username}" |
     grep public_repos | grep -oE '[0-9]+'
   )"
   for i in $(seq "$((n/100+(n%100?1:0)))"); do
-    _c "/users/eggplants/repos?page=${i}&per_page=100" \
-    >> _.jsonl
+    _c "/users/${username}/repos?page=${i}&per_page=100" \
+    >> /tmp/_.jsonl
   done
-  jq --slurp '.|add' _.jsonl > "${1}.full.json"
+  jq --slurp '.|add' /tmp/_.jsonl > "${username}.full.json"
+  rm /tmp/_.jsonl
+
   jq '
     sort_by(.created_at)|map({
       "name": .full_name,
@@ -63,7 +62,7 @@ main(){
       "created_at": .created_at,
       "updated_at": .updated_at
     })
-  ' "${1}.full.json"  > "${1}.summarized.json"
+  ' "${username}.full.json"  > "${username}.summarized.json"
   jq -r '
     [
       [
@@ -82,10 +81,9 @@ main(){
         ]
       )
     ][]|@csv
-  ' "${1}.full.json" > "${1}.csv"
-  rm _.jsonl
+  ' "${username}.full.json" > "${1}.csv"
 
-  echo "created: '${1}.full.json', '${1}.summarized.json', '${1}.csv'"
+  echo "created: '${username}.full.json', '${username}.summarized.json', '${username}.csv'"
 }
 
 main "${@}"
